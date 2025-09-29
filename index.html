@@ -1,545 +1,412 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Tables Practice</title>
-    <!-- Load Tailwind CSS from CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Configure Tailwind to use a friendly font -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        'primary-blue': '#3b82f6',
-                        'secondary-green': '#10b981',
-                        'tertiary-yellow': '#f59e0b',
-                        'gemini-purple': '#8B5CF6',
-                    }
-                }
-            }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Time Tables Practice</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Load Inter font (you referenced it in Tailwind config) -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','sans-serif'] },
+          colors: {
+            'primary-blue': '#3b82f6',
+            'secondary-green': '#10b981',
+            'tertiary-yellow': '#f59e0b',
+            'gemini-purple': '#8B5CF6',
+          }
         }
-    </script>
-    <style>
-        /* Custom styles for a clean, friendly look */
-        body {
-            background-color: #f3f4f6; /* Light grey background */
-            font-family: 'Inter', sans-serif;
-        }
-        .card {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        .feedback {
-            transition: all 0.3s ease-in-out;
-        }
-        .correct {
-            background-color: #d1fae5; /* Light green for correct */
-            border-left: 5px solid #10b981;
-        }
-        .incorrect {
-            background-color: #fee2e2; /* Light red for incorrect */
-            border-left: 5px solid #ef4444;
-        }
-        /* Ensure input field is large for touch */
-        input[type="number"] {
-            font-size: 1.5rem;
-            text-align: center;
-        }
-        /* Style for selected difficulty radio button */
-        input[type="radio"]:checked + span {
-            border-color: #3b82f6; /* primary-blue */
-            background-color: #eff6ff; /* blue-50 */
-        }
-        /* Modal backdrop */
-        .modal-backdrop {
-            background-color: rgba(0, 0, 0, 0.6);
-        }
-    </style>
+      }
+    }
+  </script>
+
+  <style>
+    body{ background:#f3f4f6; font-family:'Inter',sans-serif; }
+    .card{ box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05); }
+    .feedback{ transition:all .3s ease-in-out; }
+    .correct{ background:#d1fae5; border-left:5px solid #10b981; }
+    .incorrect{ background:#fee2e2; border-left:5px solid #ef4444; }
+    input[type="number"]{ font-size:1.5rem; text-align:center; }
+    .modal-backdrop{ background:rgba(0,0,0,.6); }
+  </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-start justify-center">
+  <div class="w-full max-w-xl">
+    <header class="text-center mb-8">
+      <h1 class="text-4xl font-extrabold text-primary-blue mb-2">Multiplication Practice!</h1>
+      <p class="text-xl text-gray-600">Choose your tables and get started.</p>
+    </header>
 
-    <div class="w-full max-w-xl">
-        <!-- Main Game Container -->
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-extrabold text-primary-blue mb-2">Multiplication Practice!</h1>
-            <p class="text-xl text-gray-600">Choose your tables and get started.</p>
-        </header>
-        
-        <div id="game-container" class="bg-white card rounded-2xl p-6 md:p-10">
-            <!-- Configuration Section -->
-            <section id="config-section" class="mb-8">
-                <h2 class="text-2xl font-semibold text-gray-800 mb-4">Which tables to practise?</h2>
+    <div id="game-container" class="bg-white card rounded-2xl p-6 md:p-10">
+      <!-- Config -->
+      <section id="config-section" class="mb-8">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Which tables to practise?</h2>
+        <div id="tables-grid" class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 mb-6"></div>
+        <div id="config-buttons" class="flex justify-end space-x-2 mt-4"></div>
 
-                <div class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3 mb-6">
-                    <!-- Checkboxes are dynamically generated here via JS -->
-                    <script>
-                        document.addEventListener('DOMContentLoaded', () => {
-                            const configSection = document.getElementById('config-section');
-                            const grid = configSection.querySelector('.grid');
-                            const fragment = document.createDocumentFragment();
-
-                            for (let i = 1; i <= 12; i++) {
-                                const div = document.createElement('div');
-                                div.className = "flex items-center justify-center";
-                                const input = document.createElement('input');
-                                input.type = "checkbox";
-                                input.id = `table-${i}`;
-                                input.value = i;
-                                input.checked = i <= 10;
-                                input.className = "hidden peer";
-                                
-                                const label = document.createElement('label');
-                                label.htmlFor = `table-${i}`;
-                                label.textContent = i;
-                                label.className = "cursor-pointer w-full h-10 flex items-center justify-center font-bold text-lg rounded-xl transition-all duration-200 border-2 border-primary-blue text-primary-blue bg-white peer-checked:bg-primary-blue peer-checked:text-white hover:shadow-md";
-
-                                div.appendChild(input);
-                                div.appendChild(label);
-                                fragment.appendChild(div);
-                            }
-                            grid.appendChild(fragment);
-
-                            // Add Select/Deselect All Buttons
-                            const buttonsDiv = document.createElement('div');
-                            buttonsDiv.className = "col-span-full flex justify-end space-x-2 mt-4";
-                            
-                            const selectAllBtn = document.createElement('button');
-                            selectAllBtn.textContent = 'Select All';
-                            selectAllBtn.className = 'px-4 py-2 bg-secondary-green text-white font-medium rounded-lg hover:bg-green-600 transition';
-                            selectAllBtn.onclick = () => document.querySelectorAll('#config-section input[type="checkbox"]').forEach(cb => cb.checked = true);
-                            
-                            const deselectAllBtn = document.createElement('button');
-                            deselectAllBtn.textContent = 'Deselect All';
-                            deselectAllBtn.className = 'px-4 py-2 bg-gray-400 text-white font-medium rounded-lg hover:bg-gray-500 transition';
-                            deselectAllBtn.onclick = () => document.querySelectorAll('#config-section input[type="checkbox"]').forEach(cb => cb.checked = false);
-
-                            buttonsDiv.appendChild(deselectAllBtn);
-                            buttonsDiv.appendChild(selectAllBtn);
-                            
-                            configSection.appendChild(buttonsDiv);
-                        });
-                    </script>
-                </div>
-                
-                <!-- Difficulty Selection -->
-                <div class="mb-8">
-                    <h3 class="text-2xl font-semibold text-gray-800 mb-4">Select Difficulty:</h3>
-                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                        <!-- Radio Button Simple -->
-                        <label for="difficulty-simple" class="flex-1 flex items-center space-x-2 p-3 bg-white rounded-xl border-2 border-primary-blue transition-colors cursor-pointer bg-blue-50 hover:bg-blue-100">
-                            <input type="radio" name="difficulty" value="simple" id="difficulty-simple" checked class="text-primary-blue focus:ring-primary-blue h-5 w-5">
-                            <span class="font-semibold text-gray-800 text-lg">Simple (3 Options)</span>
-                        </label>
-                        <!-- Radio Button Normal -->
-                        <label for="difficulty-normal" class="flex-1 flex items-center space-x-2 p-3 bg-white rounded-xl border-2 border-gray-300 transition-colors cursor-pointer hover:bg-gray-100">
-                            <input type="radio" name="difficulty" value="normal" id="difficulty-normal" class="text-primary-blue focus:ring-primary-blue h-5 w-5">
-                            <span class="font-semibold text-gray-800 text-lg">Normal (Type Answer)</span>
-                        </label>
-                    </div>
-                </div>
-
-                <button id="start-btn" onclick="startGame()" class="w-full py-4 bg-secondary-green text-white font-extrabold text-xl rounded-xl hover:bg-green-600 transition-transform transform hover:scale-[1.01] shadow-lg">
-                    Start Practice!
-                </button>
-            </section>
-
-            <!-- Game Section (Hidden initially) -->
-            <section id="game-section" class="text-center hidden">
-                <div class="mb-6 flex justify-between items-center bg-gray-100 p-4 rounded-xl">
-                    <div class="text-lg font-medium text-gray-600">
-                        Session Score: <span id="score-display" class="font-bold text-primary-blue text-2xl">0</span>
-                    </div>
-                    <button onclick="resetGame()" class="text-sm px-3 py-1 bg-tertiary-yellow text-white rounded-lg hover:bg-yellow-600 transition">
-                        New Selection
-                    </button>
-                </div>
-
-                <!-- The Question -->
-                <p class="text-3xl md:text-5xl font-extrabold text-gray-900 mb-8" id="question-text">
-                    5 &times; 8 = ?
-                </p>
-                
-                <!-- LLM Feature Button -->
-                <button onclick="showMathExplainerModal()" class="mb-6 w-full sm:w-auto px-6 py-3 bg-gemini-purple text-white font-bold text-lg rounded-xl hover:bg-violet-600 transition-transform transform hover:scale-[1.01] shadow-lg">
-                    ✨ Explain the Tables!
-                </button>
-
-                <!-- Input and Submit (Normal Mode) -->
-                <div id="normal-input" class="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                    <input type="number" id="answer-input" placeholder="Your Answer" class="w-full sm:w-1/2 p-4 border-4 border-gray-300 rounded-xl focus:border-primary-blue focus:ring-primary-blue outline-none" inputmode="numeric">
-                    <button id="submit-btn" onclick="checkAnswer()" class="w-full sm:w-auto px-8 py-4 bg-primary-blue text-white font-extrabold text-xl rounded-xl hover:bg-blue-600 transition-transform transform hover:scale-[1.01] shadow-lg">
-                        Submit
-                    </button>
-                </div>
-
-                <!-- Multiple Choice Options (Simple Mode) -->
-                <div id="simple-options" class="grid grid-cols-1 sm:grid-cols-3 gap-4 hidden">
-                    <!-- Buttons generated by generateQuestion() -->
-                </div>
-
-                <!-- Feedback Message -->
-                <div id="feedback-message" class="feedback mt-6 p-4 rounded-xl text-left text-lg font-semibold min-h-[60px] flex items-center justify-center" style="opacity: 0;">
-                    <!-- Feedback appears here -->
-                </div>
-            </section>
+        <div class="mb-8 mt-8">
+          <h3 class="text-2xl font-semibold text-gray-800 mb-4">Select Difficulty:</h3>
+          <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+            <label for="difficulty-simple" id="label-simple" class="flex-1 flex items-center space-x-2 p-3 bg-blue-50 rounded-xl border-2 border-primary-blue transition-colors cursor-pointer hover:bg-blue-100">
+              <input type="radio" name="difficulty" value="simple" id="difficulty-simple" checked class="text-primary-blue focus:ring-primary-blue h-5 w-5">
+              <span class="font-semibold text-gray-800 text-lg">Simple (3 Options)</span>
+            </label>
+            <label for="difficulty-normal" id="label-normal" class="flex-1 flex items-center space-x-2 p-3 bg-white rounded-xl border-2 border-gray-300 transition-colors cursor-pointer hover:bg-gray-100">
+              <input type="radio" name="difficulty" value="normal" id="difficulty-normal" class="text-primary-blue focus:ring-primary-blue h-5 w-5">
+              <span class="font-semibold text-gray-800 text-lg">Normal (Type Answer)</span>
+            </label>
+          </div>
         </div>
-    </div>
 
+        <button id="start-btn" class="w-full py-4 bg-secondary-green text-white font-extrabold text-xl rounded-xl hover:bg-green-600 transition-transform transform hover:scale-[1.01] shadow-lg">
+          Start Practice!
+        </button>
+      </section>
 
-    <!-- Gemini Explainer Modal -->
-    <div id="explainer-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
-        <div class="bg-white rounded-xl p-8 max-w-xl w-full card">
-            <h2 class="text-2xl font-bold mb-4 text-gemini-purple flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.05 7.44-7 7.93V20zM12 4c3.31 0 6 2.69 6 6h-2c0-2.21-1.79-4-4-4s-4 1.79-4 4H4c0-3.31 2.69-6 6-6V4z"/>
-                </svg>
-                Math Explainer by Gemini
-            </h2>
-            <div id="explainer-content" class="text-gray-700 text-lg mb-6 min-h-[100px]">
-                <p>Getting ready to explain the tables...</p>
-            </div>
-            <button onclick="document.getElementById('explainer-modal').classList.add('hidden')" class="w-full py-3 bg-primary-blue text-white font-bold rounded-lg hover:bg-blue-600 transition">
-                Got It! Back to Practice.
-            </button>
+      <!-- Game -->
+      <section id="game-section" class="text-center hidden">
+        <div class="mb-6 flex justify-between items-center bg-gray-100 p-4 rounded-xl">
+          <div class="text-lg font-medium text-gray-600">
+            Session Score: <span id="score-display" class="font-bold text-primary-blue text-2xl">0</span>
+          </div>
+          <button id="reset-btn" class="text-sm px-3 py-1 bg-tertiary-yellow text-white rounded-lg hover:bg-yellow-600 transition">
+            New Selection
+          </button>
         </div>
+
+        <p class="text-3xl md:text-5xl font-extrabold text-gray-900 mb-8" id="question-text">5 &times; 8 = ?</p>
+
+        <button id="explainer-btn" class="mb-6 w-full sm:w-auto px-6 py-3 bg-gemini-purple text-white font-bold text-lg rounded-xl hover:bg-violet-600 transition-transform transform hover:scale-[1.01] shadow-lg">
+          ✨ Explain the Tables!
+        </button>
+
+        <div id="normal-input" class="flex flex-col sm:flex-row gap-4 items-center justify-center">
+          <input type="number" id="answer-input" placeholder="Your Answer" class="w-full sm:w-1/2 p-4 border-4 border-gray-300 rounded-xl focus:border-primary-blue focus:ring-primary-blue outline-none" inputmode="numeric">
+          <button id="submit-btn" class="w-full sm:w-auto px-8 py-4 bg-primary-blue text-white font-extrabold text-xl rounded-xl hover:bg-blue-600 transition-transform transform hover:scale-[1.01] shadow-lg">
+            Submit
+          </button>
+        </div>
+
+        <div id="simple-options" class="grid grid-cols-1 sm:grid-cols-3 gap-4 hidden"></div>
+
+        <div id="feedback-message" aria-live="polite" class="feedback mt-6 p-4 rounded-xl text-left text-lg font-semibold min-h-[60px] flex items-center justify-center" style="opacity:0;"></div>
+      </section>
     </div>
+  </div>
 
+  <!-- Explainer Modal -->
+  <div id="explainer-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-backdrop">
+    <div class="bg-white rounded-xl p-8 max-w-xl w-full card">
+      <h2 class="text-2xl font-bold mb-4 text-gemini-purple flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93h2c0 3.31 2.69 6 6 6s6-2.69 6-6h2c0 4.08-3.05 7.44-7 7.93V20zM12 4c3.31 0 6 2.69 6 6h-2c0-2.21-1.79-4-4-4s-4 1.79-4 4H4c0-3.31 2.69-6 6-6V4z"/>
+        </svg>
+        Math Explainer by Gemini
+      </h2>
+      <div id="explainer-content" class="text-gray-700 text-lg mb-6 min-h-[100px]">
+        <p>Getting ready to explain the tables...</p>
+      </div>
+      <button id="explainer-close" class="w-full py-3 bg-primary-blue text-white font-bold rounded-lg hover:bg-blue-600 transition">
+        Got It! Back to Practice.
+      </button>
+    </div>
+  </div>
 
-    <!-- Game Logic and Gemini Script -->
-    <script type="module">
-        
-        // --- Gemini API Configuration ---
-        const GEMINI_API_KEY = ""; // Canvas environment provides this
-        const GEMINI_MODEL = 'gemini-2.5-flash-preview-05-20';
-        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  <!-- Game Logic -->
+  <script type="module">
+    // Gemini config (optional)
+    const GEMINI_API_KEY = ""; // add your key to enable the explainer
+    const GEMINI_MODEL = 'gemini-2.5-flash-preview-05-20';
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
+    // State
+    let score = 0;
+    let tableOptions = [];
+    let currentQuestion = { factor1: 0, factor2: 0, answer: 0 };
+    let isGameRunning = false;
+    let difficulty = 'simple';
 
-        // --- Utility for Exponential Backoff (Robust API calling) ---
+    // Elements
+    const configSection = document.getElementById('config-section');
+    const gameSection = document.getElementById('game-section');
+    const scoreDisplay = document.getElementById('score-display');
+    const questionText = document.getElementById('question-text');
+    const answerInput = document.getElementById('answer-input');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const normalInputDiv = document.getElementById('normal-input');
+    const simpleOptionsDiv = document.getElementById('simple-options');
+    const explainerModal = document.getElementById('explainer-modal');
+    const tablesGrid = document.getElementById('tables-grid');
+    const configButtons = document.getElementById('config-buttons');
 
-        /**
-         * Executes a fetch request with exponential backoff for transient errors (429, 500, 503).
-         */
-        async function fetchWithBackoff(url, options, maxRetries = 3) {
-            for (let attempt = 0; attempt < maxRetries; attempt++) {
-                try {
-                    const response = await fetch(url, options);
-
-                    if (response.ok) {
-                        return response; // Success
-                    }
-
-                    // Check for status codes that indicate transient errors
-                    if (response.status === 429 || response.status >= 500) {
-                        if (attempt === maxRetries - 1) {
-                            throw new Error(\`API call failed after \${maxRetries} attempts with status \${response.status}.\`);
-                        }
-                        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-                        console.warn(\`Attempt \${attempt + 1} failed with status \${response.status}. Retrying in \${delay.toFixed(0)}ms...\`);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                    } else {
-                        // Non-transient error (e.g., 400, 401, 404). Do not retry.
-                        throw new Error(\`API call failed with non-retriable status \${response.status}: \${response.statusText}\`);
-                    }
-                } catch (error) {
-                    if (attempt === maxRetries - 1) {
-                        throw error;
-                    }
-                    const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-                    console.warn(\`Attempt \${attempt + 1} failed due to network error. Retrying in \${delay.toFixed(0)}ms...\`, error.message);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
+    // Backoff helper
+    async function fetchWithBackoff(url, options, maxRetries = 3) {
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          const res = await fetch(url, options);
+          if (res.ok) return res;
+          if (res.status === 429 || res.status >= 500) {
+            if (attempt === maxRetries - 1) throw new Error(`API failed after ${maxRetries} attempts (${res.status}).`);
+            const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+            await new Promise(r => setTimeout(r, delay));
+          } else {
+            // Non-retriable
+            const text = await res.text().catch(() => '');
+            throw new Error(`API error ${res.status}: ${text || res.statusText}`);
+          }
+        } catch (e) {
+          if (attempt === maxRetries - 1) throw e;
+          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+          await new Promise(r => setTimeout(r, delay));
         }
+      }
+    }
 
-        // --- Game Logic ---
+    // Build config UI
+    function setupConfigElements() {
+      const frag = document.createDocumentFragment();
+      for (let i = 1; i <= 12; i++) {
+        const div = document.createElement('div');
+        div.className = "flex items-center justify-center";
+        const input = document.createElement('input');
+        input.type = "checkbox";
+        input.id = `table-${i}`;
+        input.value = i;
+        input.checked = i <= 10;
+        input.className = "hidden peer";
+        const label = document.createElement('label');
+        label.htmlFor = `table-${i}`;
+        label.textContent = i;
+        label.className = "cursor-pointer w-full h-10 flex items-center justify-center font-bold text-lg rounded-xl transition-all duration-200 border-2 border-primary-blue text-primary-blue bg-white peer-checked:bg-primary-blue peer-checked:text-white hover:shadow-md";
+        div.append(input, label);
+        frag.appendChild(div);
+      }
+      tablesGrid.appendChild(frag);
 
-        // Global state variables
-        let score = 0; // Current session score (not saved)
-        let tableOptions = [];
-        let currentQuestion = { factor1: 0, factor2: 0, answer: 0 }; 
-        let isGameRunning = false;
-        let difficulty = 'simple';
+      const selectAllBtn = document.createElement('button');
+      selectAllBtn.textContent = 'Select All';
+      selectAllBtn.className = 'px-4 py-2 bg-secondary-green text-white font-medium rounded-lg hover:bg-green-600 transition';
+      selectAllBtn.addEventListener('click', () => document.querySelectorAll('#tables-grid input[type="checkbox"]').forEach(cb => cb.checked = true));
 
-        // Element selectors
-        const configSection = document.getElementById('config-section');
-        const gameSection = document.getElementById('game-section');
-        const scoreDisplay = document.getElementById('score-display');
-        const questionText = document.getElementById('question-text');
-        const answerInput = document.getElementById('answer-input');
-        const feedbackMessage = document.getElementById('feedback-message');
-        const normalInputDiv = document.getElementById('normal-input');
-        const simpleOptionsDiv = document.getElementById('simple-options');
-        const explainerModal = document.getElementById('explainer-modal');
+      const deselectAllBtn = document.createElement('button');
+      deselectAllBtn.textContent = 'Deselect All';
+      deselectAllBtn.className = 'px-4 py-2 bg-gray-400 text-white font-medium rounded-lg hover:bg-gray-500 transition';
+      deselectAllBtn.addEventListener('click', () => document.querySelectorAll('#tables-grid input[type="checkbox"]').forEach(cb => cb.checked = false));
 
-        
-        /**
-         * Shows the Math Explainer modal and triggers the LLM content generation.
-         */
-        window.showMathExplainerModal = async function() {
-             if (!isGameRunning) {
-                 showFeedback("Start a practice session first to see an explanation!", 'incorrect', 3000);
-                 return;
-             }
-             
-            explainerModal.classList.remove('hidden');
-            const contentDiv = document.getElementById('explainer-content');
-            const factor = currentQuestion.factor2;
-            
-            // Display loading state
-            contentDiv.innerHTML = \`<p class="text-xl text-gray-500 flex items-center justify-center">
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gemini-purple" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Gemini is generating a fun explanation for the \${factor} times table...
-            </p>\`;
+      configButtons.append(deselectAllBtn, selectAllBtn);
+    }
 
-            try {
-                const explanation = await getTimesTableExplanation(factor);
-                contentDiv.innerHTML = \`<p>\${explanation}</p>\`;
-            } catch (error) {
-                console.error("Gemini API call failed:", error);
-                contentDiv.innerHTML = '<p class="text-red-600">Sorry, the Math Explainer is currently unavailable. Please try again later!</p>';
-            }
+    function setupEventListeners() {
+      // FIX: use keydown, not keypress
+      document.addEventListener('keydown', (event) => {
+        if (isGameRunning && difficulty === 'normal' && event.key === 'Enter') {
+          event.preventDefault();
+          checkAnswer();
         }
-        
-        /**
-         * Calls the Gemini API to get a fun explanation for a times table.
-         * @param {number} factor - The times table to explain (e.g., 7).
-         * @returns {Promise<string>} The generated text explanation.
-         */
-        async function getTimesTableExplanation(factor) {
-            const systemPrompt = "You are a friendly, encouraging math tutor for a young student (8-10 years old). Explain the concept of the given multiplication table in a fun, simple, and relatable way, using real-world examples (like objects, animals, or food). Keep the explanation under 100 words.";
-            const userQuery = \`Explain the \${factor} times table.\`;
+      });
 
-            const payload = {
-                contents: [{ parts: [{ text: userQuery }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-            };
-
-            const options = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            };
-            
-            // Use the robust fetch function
-            const response = await fetchWithBackoff(GEMINI_API_URL, options);
-            const result = await response.json();
-            
-            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            
-            if (text) {
-                return text;
-            } else {
-                throw new Error("Gemini response was empty or malformed.");
-            }
-        }
-
-
-        /**
-         * Utility function to shuffle an array.
-         */
-        function shuffleArray(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
-            }
-            return array;
-        }
-
-        /**
-         * Generates two plausible but incorrect answers for the multiple-choice mode.
-         */
-        function generateDistractors(correctAnswer) {
-            const distractors = new Set();
-            const minVal = Math.max(1, correctAnswer - 10);
-            const maxVal = correctAnswer + 10;
-
-            while (distractors.size < 2) {
-                let distractor = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
-                if (distractor !== correctAnswer && !distractors.has(distractor)) {
-                    // Try to avoid simple mistakes like off by 1 or 2, unless the answer is small
-                    if (Math.abs(distractor - correctAnswer) < 3 && correctAnswer > 10) continue; 
-                    distractors.add(distractor);
-                }
-            }
-            return Array.from(distractors);
-        }
-
-        /**
-         * Starts the game, reads configuration, and displays the game section.
-         */
-        window.startGame = function() {
-            tableOptions = [];
-            document.querySelectorAll('#config-section input[type="checkbox"]:checked').forEach(cb => {
-                tableOptions.push(parseInt(cb.value));
-            });
-            
-            difficulty = document.querySelector('input[name="difficulty"]:checked').value;
-
-            if (tableOptions.length === 0) {
-                showFeedback("Oops! Please select at least one times table to practise.", 'incorrect', 3000);
-                return;
-            }
-
-            score = 0;
-            scoreDisplay.textContent = score;
-            isGameRunning = true;
-
-            configSection.classList.add('hidden');
-            gameSection.classList.remove('hidden');
-            
-            if (difficulty === 'simple') {
-                normalInputDiv.classList.add('hidden');
-                simpleOptionsDiv.classList.remove('hidden');
-            } else {
-                simpleOptionsDiv.classList.add('hidden');
-                normalInputDiv.classList.remove('hidden');
-                answerInput.value = '';
-                setTimeout(() => answerInput.focus(), 100);
-            }
-
-            showFeedback(`Let's go! Ready for the first question.`, 'correct', 2000);
-            generateQuestion();
-        }
-
-        /**
-         * Resets the game back to the configuration screen.
-         */
-        window.resetGame = function() {
-            isGameRunning = false;
-            configSection.classList.remove('hidden');
-            gameSection.classList.add('hidden');
-            feedbackMessage.style.opacity = '0';
-            answerInput.value = '';
-            score = 0;
-            scoreDisplay.textContent = score;
-            questionText.textContent = '...';
-        }
-
-        /**
-         * Generates a new multiplication question.
-         */
-        function generateQuestion() {
-            // factor2 is the times table being focused on, and it must be selected
-            const factor2 = tableOptions[Math.floor(Math.random() * tableOptions.length)]; 
-            const factor1 = Math.floor(Math.random() * 12) + 1;
-
-            currentQuestion.factor1 = factor1;
-            currentQuestion.factor2 = factor2;
-            currentQuestion.answer = factor1 * factor2;
-
-            questionText.textContent = \`\${factor1} \u00d7 \${factor2} = ?\`;
-
-            if (difficulty === 'simple') {
-                generateMultipleChoiceOptions(currentQuestion.answer);
-            } else {
-                answerInput.value = '';
-                answerInput.focus();
-            }
-        }
-
-        /**
-         * Generates and displays the multiple choice buttons for Simple mode.
-         */
-        function generateMultipleChoiceOptions(correctAnswer) {
-            simpleOptionsDiv.innerHTML = '';
-            
-            const distractors = generateDistractors(correctAnswer);
-            const options = shuffleArray([correctAnswer, ...distractors]);
-
-            options.forEach(option => {
-                const button = document.createElement('button');
-                button.textContent = option;
-                button.value = option;
-                button.className = "py-4 px-6 bg-primary-blue text-white font-extrabold text-2xl rounded-xl hover:bg-blue-600 transition-transform transform hover:scale-[1.03] shadow-lg";
-                button.onclick = () => processAnswer(parseInt(button.value));
-                simpleOptionsDiv.appendChild(button);
-            });
-        }
-
-        /**
-         * Checks the user's text input answer (Normal mode) before processing.
-         */
-        window.checkAnswer = function() {
-            if (!isGameRunning || difficulty === 'simple') return;
-
-            const userAnswer = parseInt(answerInput.value.trim());
-
-            if (isNaN(userAnswer)) {
-                showFeedback("Please enter a number!", 'incorrect', 1500);
-                return;
-            }
-
-            processAnswer(userAnswer);
-        }
-
-        /**
-         * Core logic to process the answer, update score, and provide feedback.
-         * @param {number} userAnswer - The user's provided answer.
-         */
-        function processAnswer(userAnswer) {
-            if (userAnswer === currentQuestion.answer) {
-                score++;
-                showFeedback(\`Correct! \u{1F389} \${currentQuestion.factor1} \u00d7 \${currentQuestion.factor2} is \${currentQuestion.answer}.\`, 'correct', 1500);
-            } else {
-                score = Math.max(0, score - 1);
-                showFeedback(\`Not quite! \u{1F613} \${currentQuestion.factor1} \u00d7 \${currentQuestion.factor2} is actually \${currentQuestion.answer}.\`, 'incorrect', 3000);
-            }
-            
-            scoreDisplay.textContent = score;
-            
-            // Score persistence removed as requested.
-
-            generateQuestion();
-        }
-
-        /**
-         * Displays a temporary feedback message.
-         */
-        function showFeedback(message, type, duration = 2000) {
-            feedbackMessage.classList.remove('correct', 'incorrect');
-            feedbackMessage.textContent = message;
-            feedbackMessage.classList.add(type);
-            feedbackMessage.style.opacity = '1';
-
-            setTimeout(() => {
-                feedbackMessage.style.opacity = '0';
-                setTimeout(() => {
-                    feedbackMessage.classList.remove('correct', 'incorrect');
-                }, 300);
-            }, duration);
-        }
-
-        // --- Event Listeners and Initialisation ---
-
-        // Event listener for Enter key (Normal mode)
-        document.addEventListener('keypress', (event) => {
-            if (isGameRunning && difficulty === 'normal' && event.key === 'Enter') {
-                event.preventDefault();
-                window.checkAnswer();
-            }
+      document.querySelectorAll('input[name="difficulty"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          document.getElementById('label-simple').classList.remove('border-primary-blue','bg-blue-50');
+          document.getElementById('label-normal').classList.remove('border-primary-blue','bg-blue-50');
+          document.getElementById('label-simple').classList.add('border-gray-300','bg-white');
+          document.getElementById('label-normal').classList.add('border-gray-300','bg-white');
+          const label = document.querySelector(`label[for="${e.target.id}"]`);
+          label.classList.add('border-primary-blue','bg-blue-50');
+          label.classList.remove('border-gray-300','bg-white');
         });
-        
-        // Add event listeners to update difficulty styling
-        document.querySelectorAll('input[name="difficulty"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                document.querySelectorAll('label[for^="difficulty-"]').forEach(label => {
-                    label.classList.remove('border-primary-blue', 'bg-blue-50');
-                    label.classList.add('border-gray-300', 'bg-white');
-                });
-                
-                const label = document.querySelector(\`label[for="\${e.target.id}"]\`);
-                label.classList.add('border-primary-blue', 'bg-blue-50');
-                label.classList.remove('border-gray-300', 'bg-white');
-            });
-        });
+      });
 
-    </script>
+      document.getElementById('start-btn')?.addEventListener('click', startGame);
+      document.getElementById('reset-btn')?.addEventListener('click', resetGame);
+      document.getElementById('submit-btn')?.addEventListener('click', checkAnswer);
+      document.getElementById('explainer-btn')?.addEventListener('click', showMathExplainerModal);
+      document.getElementById('explainer-close')?.addEventListener('click', () => explainerModal.classList.add('hidden'));
+    }
+
+    // Game core
+    function startGame() {
+      tableOptions = [];
+      document.querySelectorAll('#tables-grid input[type="checkbox"]:checked').forEach(cb => tableOptions.push(parseInt(cb.value, 10)));
+      difficulty = document.querySelector('input[name="difficulty"]:checked')?.value || 'normal';
+
+      if (!tableOptions.length) {
+        showFeedback("Oops! Please select at least one times table to practise.", 'incorrect', 3000);
+        return;
+      }
+
+      score = 0;
+      scoreDisplay.textContent = score;
+      isGameRunning = true;
+
+      configSection.classList.add('hidden');
+      gameSection.classList.remove('hidden');
+
+      if (difficulty === 'simple') {
+        normalInputDiv.classList.add('hidden');
+        simpleOptionsDiv.classList.remove('hidden');
+      } else {
+        simpleOptionsDiv.classList.add('hidden');
+        normalInputDiv.classList.remove('hidden');
+        answerInput.value = '';
+        answerInput.focus({ preventScroll: true });
+      }
+
+      showFeedback(`Let's go! Ready for the first question.`, 'correct', 1200);
+      generateQuestion();
+    }
+
+    function resetGame() {
+      isGameRunning = false;
+      configSection.classList.remove('hidden');
+      gameSection.classList.add('hidden');
+      feedbackMessage.style.opacity = '0';
+      answerInput.value = '';
+      score = 0;
+      scoreDisplay.textContent = score;
+      questionText.textContent = '...';
+      document.activeElement?.blur();
+    }
+
+    function generateQuestion() {
+      const factor2 = tableOptions[Math.floor(Math.random() * tableOptions.length)];
+      const factor1 = Math.floor(Math.random() * 12) + 1;
+      currentQuestion = { factor1, factor2, answer: factor1 * factor2 };
+      questionText.textContent = `${factor1} × ${factor2} = ?`;
+
+      if (difficulty === 'simple') {
+        generateMultipleChoiceOptions(currentQuestion.answer);
+      } else {
+        answerInput.value = '';
+        answerInput.focus({ preventScroll: true });
+      }
+    }
+
+    function processAnswer(userAnswer) {
+      if (userAnswer === currentQuestion.answer) {
+        score++;
+        showFeedback(`Correct! 🎉 ${currentQuestion.factor1} × ${currentQuestion.factor2} is ${currentQuestion.answer}.`, 'correct', 1200);
+      } else {
+        score = Math.max(0, score - 1);
+        showFeedback(`Not quite! 😓 ${currentQuestion.factor1} × ${currentQuestion.factor2} is actually ${currentQuestion.answer}.`, 'incorrect', 2000);
+      }
+      scoreDisplay.textContent = score;
+      generateQuestion();
+    }
+
+    function checkAnswer() {
+      if (!isGameRunning || difficulty === 'simple') return;
+      const val = answerInput.value.trim();
+      if (val === '') {
+        showFeedback("Please enter a number!", 'incorrect', 1200);
+        return;
+      }
+      const userAnswer = parseInt(val, 10);
+      if (Number.isNaN(userAnswer)) {
+        showFeedback("Please enter a valid number!", 'incorrect', 1200);
+        return;
+      }
+      processAnswer(userAnswer);
+    }
+
+    function showFeedback(message, type, duration = 1800) {
+      feedbackMessage.classList.remove('correct','incorrect');
+      feedbackMessage.textContent = message;
+      feedbackMessage.classList.add(type);
+      feedbackMessage.style.opacity = '1';
+      window.clearTimeout(showFeedback._t);
+      showFeedback._t = window.setTimeout(() => {
+        feedbackMessage.style.opacity = '0';
+        setTimeout(() => feedbackMessage.classList.remove('correct','incorrect'), 250);
+      }, duration);
+    }
+
+    function shuffleArray(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; }
+
+    function generateDistractors(correct) {
+      const s = new Set();
+      const minVal = Math.max(1, correct - 10);
+      const maxVal = correct + 10;
+      while (s.size < 2) {
+        const d = Math.floor(Math.random() * (maxVal - minVal + 1)) + minVal;
+        if (d !== correct && Math.abs(d - correct) >= (correct > 10 ? 3 : 1)) s.add(d);
+      }
+      return [...s];
+    }
+
+    function generateMultipleChoiceOptions(correctAnswer) {
+      simpleOptionsDiv.innerHTML = '';
+      const options = shuffleArray([correctAnswer, ...generateDistractors(correctAnswer)]);
+      options.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.value = opt;
+        btn.className = "py-4 px-6 bg-primary-blue text-white font-extrabold text-2xl rounded-xl hover:bg-blue-600 transition-transform transform hover:scale-[1.03] shadow-lg";
+        btn.addEventListener('click', () => processAnswer(parseInt(btn.value,10)));
+        simpleOptionsDiv.appendChild(btn);
+      });
+    }
+
+    async function showMathExplainerModal() {
+      if (!isGameRunning) {
+        showFeedback("Start a practice session first to see an explanation!", 'incorrect', 1800);
+        return;
+      }
+      explainerModal.classList.remove('hidden');
+      const contentDiv = document.getElementById('explainer-content');
+      const factor = currentQuestion.factor2;
+      contentDiv.innerHTML = `
+        <p class="text-xl text-gray-500 flex items-center justify-center">
+          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gemini-purple" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          Generating a fun explanation for the ${factor} times table…
+        </p>`;
+
+      try {
+        const text = await getTimesTableExplanation(factor);
+        contentDiv.innerHTML = `<p>${text}</p>`;
+      } catch (err) {
+        console.error(err);
+        if (!GEMINI_API_KEY) {
+          contentDiv.innerHTML = `<p class="text-red-600">The explainer is off because the API key is missing. Add your key in the script to enable it.</p>`;
+        } else {
+          contentDiv.innerHTML = `<p class="text-red-600">Sorry, something went wrong fetching the explanation. Please try again.</p>`;
+        }
+      }
+    }
+
+    async function getTimesTableExplanation(factor) {
+      const systemPrompt = "You are a friendly, encouraging math tutor for a young student (8-10 years old). Explain the concept of the given multiplication table in a fun, simple, and relatable way, using real-world examples. Keep it under 100 words.";
+      const userQuery = `Explain the ${factor} times table.`;
+      const payload = {
+        contents: [{ parts: [{ text: userQuery }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] }
+      };
+      const res = await fetchWithBackoff(GEMINI_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Empty response from Gemini');
+      return text;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      setupConfigElements();
+      setupEventListeners();
+    });
+  </script>
 </body>
 </html>
